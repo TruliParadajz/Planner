@@ -27,7 +27,7 @@ namespace Planner.Controllers
         [ResponseType(typeof(User))]
         public IHttpActionResult GetUser(int id)
         {
-            User user = db.Users.Find(id);
+            User user = db.Users.Include(x => x.Tasks).Where(x => x.Id == id).FirstOrDefault();
             if (user == null)
             {
                 return NotFound();

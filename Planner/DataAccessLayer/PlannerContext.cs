@@ -12,7 +12,7 @@ namespace Planner.DataAccessLayer
     {
         public PlannerContext() : base("name=PlannerContext")
         {
-
+            this.Configuration.LazyLoadingEnabled = false;
         }
         public DbSet<User> Users { get; set; }
         public DbSet<Task> Tasks { get; set; }
