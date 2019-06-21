@@ -79,11 +79,41 @@ namespace Planner.Controllers
             {
                 return BadRequest(ModelState);
             }
+            var exists = db.Users.Where(x => x.Email == user.Email).FirstOrDefault();
+
+            if (exists != null)
+            {
+                return BadRequest("User already exists!");
+            }
 
             db.Users.Add(user);
             db.SaveChanges();
 
             return CreatedAtRoute("DefaultApi", new { id = user.Id }, user);
+        }
+
+        // GET: api/Users/login
+        [HttpGet]
+        [Route("api/users/login")]
+        public IHttpActionResult CheckUser([FromBody] User loginUser /*string email, string password*/)
+        {
+            User user = new User();
+
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            try
+            {
+                user = db.Users.Where(x => x.Email == loginUser.Email && x.Password == loginUser.Password).First();
+                return Ok(user);
+            }
+            catch (Exception)
+            {
+                return BadRequest("User not found!");
+            }
+
+
         }
 
         // DELETE: api/Users/5

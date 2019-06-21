@@ -79,16 +79,8 @@ namespace Planner.Controllers
             {
                 return BadRequest(ModelState);
             }
-
-            //User userTask = new User();
-            //userTask = db.Users.Where(x => x.Id == task.UserId).FirstOrDefault();
-            //task.User = userTask;
-
-            //db.Entry(userTask).State = EntityState.Modified;
-            // db.Users.Add(userTask);
-
+            
             db.Tasks.Add(task);
-
             db.SaveChanges();
 
             return CreatedAtRoute("DefaultApi", new { id = task.Id }, task);
