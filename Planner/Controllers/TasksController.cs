@@ -7,12 +7,14 @@ using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Web.Http;
+using System.Web.Http.Cors;
 using System.Web.Http.Description;
 using Planner.DataAccessLayer;
 using Planner.Models;
 
 namespace Planner.Controllers
 {
+    [EnableCors(origins: "*", headers: "*", methods: "*")]
     public class TasksController : ApiController
     {
         private PlannerContext db = new PlannerContext();

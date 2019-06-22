@@ -6,28 +6,33 @@ using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
+using System.Web.Http.Cors;
 using System.Web.Http.Description;
 using Planner.DataAccessLayer;
 using Planner.Models;
 
 namespace Planner.Controllers
 {
+    [EnableCors(origins: "*", headers: "*", methods: "*")]
     public class UsersController : ApiController
     {
         private PlannerContext db = new PlannerContext();
 
         // GET: api/Users
-        public IQueryable<User> GetUsers()
+        public async Task<IEnumerable<User>> GetUsers()
         {
+            IEnumerable<User> user = null;
+            user =  await db.Users.ToListAsync();
             return db.Users;
         }
 
         // GET: api/Users/5
         [ResponseType(typeof(User))]
-        public IHttpActionResult GetUser(int id)
+        public async Task<IHttpActionResult> GetUser(int id)
         {
-            User user = db.Users.Include(x => x.Tasks).Where(x => x.Id == id).FirstOrDefault();
+            User user = await db.Users.Include(x => x.Tasks).Where(x => x.Id == id).FirstOrDefaultAsync();
             if (user == null)
             {
                 return NotFound();
@@ -73,13 +78,13 @@ namespace Planner.Controllers
 
         // POST: api/Users
         [ResponseType(typeof(User))]
-        public IHttpActionResult PostUser(User user)
+        public async Task<IHttpActionResult> PostUser(User user)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var exists = db.Users.Where(x => x.Email == user.Email).FirstOrDefault();
+            var exists = await db.Users.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
 
             if (exists != null)
             {
@@ -92,10 +97,10 @@ namespace Planner.Controllers
             return CreatedAtRoute("DefaultApi", new { id = user.Id }, user);
         }
 
-        // GET: api/Users/login
-        [HttpGet]
+        // POST: api/Users/login
+        [HttpPost]
         [Route("api/users/login")]
-        public IHttpActionResult CheckUser([FromBody] User loginUser /*string email, string password*/)
+        public async Task<IHttpActionResult> CheckUser ([FromBody] User loginUser /*string email, string password*/)
         {
             User user = new User();
 
@@ -105,7 +110,7 @@ namespace Planner.Controllers
             }
             try
             {
-                user = db.Users.Where(x => x.Email == loginUser.Email && x.Password == loginUser.Password).First();
+                user = await db.Users.Where(x => x.Email == loginUser.Email && x.Password == loginUser.Password).FirstAsync();
                 return Ok(user);
             }
             catch (Exception)
