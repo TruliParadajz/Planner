@@ -29,7 +29,8 @@ namespace Planner.Controllers
         }
 
         // GET: api/Users/5
-        [ResponseType(typeof(User))]
+        [HttpGet]
+        [Route("api/users/{id}")]
         public async Task<IHttpActionResult> GetUser(int id)
         {
             User user = await db.Users.Include(x => x.Tasks).Where(x => x.Id == id).FirstOrDefaultAsync();
@@ -42,23 +43,30 @@ namespace Planner.Controllers
         }
 
         // PUT: api/Users/5
-        [ResponseType(typeof(void))]
-        public IHttpActionResult PutUser(int id, User user)
+        [HttpPut]
+        [Route("api/users/{id}/{password}")]
+        async public Task<IHttpActionResult> PutUser(int id, string password)
         {
+            User user = new User();
+            user = await db.Users.Where(x => x.Id == id).FirstAsync();
+
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (id != user.Id)
+            if (user == null)
             {
-                return BadRequest();
+                return BadRequest("User not found with id: " + id);
             }
+
+            user.Password = password;
 
             db.Entry(user).State = EntityState.Modified;
 
             try
             {
+                
                 db.SaveChanges();
             }
             catch (DbUpdateConcurrencyException)
@@ -73,7 +81,7 @@ namespace Planner.Controllers
                 }
             }
 
-            return StatusCode(HttpStatusCode.NoContent);
+            return StatusCode(HttpStatusCode.Created);
         }
 
         // POST: api/Users
@@ -122,7 +130,8 @@ namespace Planner.Controllers
         }
 
         // DELETE: api/Users/5
-        [ResponseType(typeof(User))]
+        [HttpDelete]
+        [Route("api/users/{id}")]
         public IHttpActionResult DeleteUser(int id)
         {
             User user = db.Users.Find(id);
