@@ -48,7 +48,7 @@ namespace Planner.Controllers
         async public Task<IHttpActionResult> PutUser(int id, string password)
         {
             User user = new User();
-            user = await db.Users.Where(x => x.Id == id).FirstAsync();
+            user = await db.Users.Where(x => x.Id == id).FirstOrDefaultAsync();
 
             if (!ModelState.IsValid)
             {

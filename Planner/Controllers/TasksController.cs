@@ -6,6 +6,7 @@ using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.Cors;
 using System.Web.Http.Description;
@@ -20,16 +21,20 @@ namespace Planner.Controllers
         private PlannerContext db = new PlannerContext();
 
         // GET: api/Tasks
-        public IQueryable<Task> GetTasks()
+        [HttpGet]
+        [Route("api/tasks")]
+        public IQueryable<Models.Task> GetTasks()
         {
             return db.Tasks;
         }
 
+
         // GET: api/Tasks/5
-        [ResponseType(typeof(Task))]
+        [HttpGet]
+        [Route("api/tasks/{id}")]
         public IHttpActionResult GetTask(int id)
         {
-            Task task = db.Tasks.Find(id);
+            Models.Task task = db.Tasks.Find(id);
             if (task == null)
             {
                 return NotFound();
@@ -39,20 +44,29 @@ namespace Planner.Controllers
         }
 
         // PUT: api/Tasks/5
-        [ResponseType(typeof(void))]
-        public IHttpActionResult PutTask(int id, Task task)
+        [HttpPut]
+        [Route("api/tasks")]
+        async public Task<IHttpActionResult> PutTask([FromBody] Models.Task task)
         {
+            int id = task.Id;
+            Models.Task taskTemp = new Models.Task();
+
+            taskTemp = await db.Tasks.Where(x => x.Id == id).FirstOrDefaultAsync();
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
 
-            if (id != task.Id)
+            if (id != taskTemp.Id)
             {
                 return BadRequest();
             }
 
-            db.Entry(task).State = EntityState.Modified;
+            taskTemp.Text = task.Text;
+            taskTemp.Solved = task.Solved;
+            taskTemp.Date = task.Date;
+
+            db.Entry(taskTemp).State = EntityState.Modified;
 
             try
             {
@@ -70,12 +84,13 @@ namespace Planner.Controllers
                 }
             }
 
-            return StatusCode(HttpStatusCode.NoContent);
+            return Ok(taskTemp);
         }
 
+        [HttpPost]
         // POST: api/Tasks
-        [ResponseType(typeof(Task))]
-        public IHttpActionResult PostTask(Task task)
+        [Route("api/tasks")]
+        public IHttpActionResult PostTask([FromBody] Models.Task task)
         {
             if (!ModelState.IsValid)
             {
@@ -85,14 +100,15 @@ namespace Planner.Controllers
             db.Tasks.Add(task);
             db.SaveChanges();
 
-            return CreatedAtRoute("DefaultApi", new { id = task.Id }, task);
+            return Ok(task);
         }
 
+        [HttpDelete]
         // DELETE: api/Tasks/5
-        [ResponseType(typeof(Task))]
+        [Route("api/tasks/{id}")]
         public IHttpActionResult DeleteTask(int id)
         {
-            Task task = db.Tasks.Find(id);
+            Models.Task task = db.Tasks.Find(id);
             if (task == null)
             {
                 return NotFound();
