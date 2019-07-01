@@ -81,7 +81,7 @@ namespace Planner.Controllers
                 }
             }
 
-            return StatusCode(HttpStatusCode.Created);
+            return StatusCode(HttpStatusCode.OK);
         }
 
         // POST: api/Users
@@ -123,7 +123,7 @@ namespace Planner.Controllers
             }
             catch (Exception)
             {
-                return BadRequest("User not found!");
+                return BadRequest("User not found, check your entry!");
             }
 
 
