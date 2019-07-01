@@ -6,6 +6,8 @@ using System.Data.Entity.Infrastructure;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using System.Web.Http;
 using System.Web.Http.Cors;
@@ -21,6 +23,8 @@ namespace Planner.Controllers
         private PlannerContext db = new PlannerContext();
 
         // GET: api/Users
+        [HttpGet]
+        [Route("api/users")]
         public async Task<IEnumerable<User>> GetUsers()
         {
             IEnumerable<User> user = null;
@@ -60,7 +64,7 @@ namespace Planner.Controllers
                 return BadRequest("User not found with id: " + id);
             }
 
-            user.Password = password;
+            user.Password = PasswordHashing(password);
 
             db.Entry(user).State = EntityState.Modified;
 
@@ -85,7 +89,8 @@ namespace Planner.Controllers
         }
 
         // POST: api/Users
-        [ResponseType(typeof(User))]
+        [HttpPost]
+        [Route("api/users")]
         public async Task<IHttpActionResult> PostUser(User user)
         {
             if (!ModelState.IsValid)
@@ -99,10 +104,12 @@ namespace Planner.Controllers
                 return BadRequest("User already exists!");
             }
 
+            user.Password = PasswordHashing(user.Password);
+
             db.Users.Add(user);
             db.SaveChanges();
 
-            return CreatedAtRoute("DefaultApi", new { id = user.Id }, user);
+            return Ok(user);
         }
 
         // POST: api/Users/login
@@ -118,7 +125,8 @@ namespace Planner.Controllers
             }
             try
             {
-                user = await db.Users.Where(x => x.Email == loginUser.Email && x.Password == loginUser.Password).FirstAsync();
+                var hashedPassword = PasswordHashing(loginUser.Password);
+                user = await db.Users.Where(x => x.Email == loginUser.Email && x.Password == hashedPassword).FirstAsync();
                 return Ok(user);
             }
             catch (Exception)
@@ -159,5 +167,63 @@ namespace Planner.Controllers
         {
             return db.Users.Count(e => e.Id == id) > 0;
         }
+
+
+
+
+        // POST: api/Users
+        [HttpPost]
+        [Route("api/users/post/hash")]
+        public async Task<IHttpActionResult> PostUserHash(User user)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var exists = await db.Users.Where(x => x.Email == user.Email).FirstOrDefaultAsync();
+
+            if (exists != null)
+            {
+                return BadRequest("User already exists!");
+            }
+
+            user.Password = PasswordHashing(user.Password);
+
+            db.Users.Add(user);
+            db.SaveChanges();
+
+            return Ok(user);
+        }
+
+
+        // funkcija za sifriranje lozinke - SHA256
+        private string PasswordHashing(string password)
+        {
+            HashAlgorithm algorithm = new SHA256Managed();
+            byte[] salt = new byte[] { 1, 2, 3, 4, 5, 6, 7, 8 };
+            var password_bytes = ASCIIEncoding.ASCII.GetBytes(password);
+
+            byte[] passwordWithSalt = new byte[password_bytes.Length + salt.Length];
+
+            for (int i = 0; i < password.Length; i++)
+            {
+                passwordWithSalt[i] = password_bytes[i];
+            }
+
+            for (int i = 0; i < salt.Length; i++)
+            {
+                passwordWithSalt[password_bytes.Length + i] = salt[i];
+            }
+
+            var hashedPassword = algorithm.ComputeHash(passwordWithSalt);
+            var hashedStringPassword = Convert.ToBase64String(hashedPassword);
+
+            return hashedStringPassword;
+        }
+
+
+
+
+
     }
 }
